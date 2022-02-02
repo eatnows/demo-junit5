@@ -71,3 +71,46 @@ assertTimeout(Duration.ofMillis(100), () -> {
 <br> 트랜잭션 설정을 가지고 있는 쓰레드와 별개의 쓰레드로 코드를 실행하기 때문에 주의해야한다. (롤백이 되지 않고 DB 반영이 되는 문제 등)
 
 
+
+### EnableOnOs, DisabledOnOs
+테스트를 실행하는 환경이 특정 OS인 경우에 테스트 메소드를 활성화할지 비활성화할지를 정하는 애너테이션으로
+테스트 클래스 전체를 실행할 경우 적용되고, 특정 메서드를 실행할 경우에는 적용되지 않는다.
+```java
+@Test
+@DisplayName("exception이 발생하는지를 테스트")
+@DisabledOnOs({OS.MAC})
+void assertThrowsTest() {
+    IllegalArgumentException exception =
+            assertThrows(IllegalArgumentException.class, () -> new Study(-10));
+
+    assertEquals("limit은 0보다 커야 한다.", exception.getMessage());
+}
+```
+
+### EnableOnJre, DisableOnJre
+OS와 마찬가지로 특정 자바버전을 선택해서 활성화할 수 있게 한다.
+
+### EnabledIfEnvironmentVariable, DisabledIfEnvironmentVariable
+환경변수가 매치될경우 (비)활성화할 수 있는 애너테이션으로
+`assumingThat()` 메서드와 비슷하게 작동한다. 
+<br> 대소문자를 구별하기 때문에 주의해야한다.
+```java
+// 해당 조건을 만족하면 {} 코드를 실행
+assumingThat("local".equalsIgnoreCase(test_env), () -> {
+    System.out.println("local");
+    Study study = new Study(100);
+    assertThat(study.getLimit()).isGreaterThan(0);
+});
+```
+ 
+```java
+@Test
+@DisplayName("시간이내에 완료되는지 테스트")
+@EnabledIfEnvironmentVariable(named = "TEST_ENV", matches = "local")
+void assertTimeoutTest() {
+    assertTimeoutPreemptively(Duration.ofMillis(100), () -> {
+        new Study(10);
+        Thread.sleep(300);
+    });
+}
+```
