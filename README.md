@@ -114,3 +114,69 @@ void assertTimeoutTest() {
     });
 }
 ```
+
+### Tag
+테스트 메서드들을 그룹화하여 실행하고싶을때 `@Tag`를 사용할 수 있다.
+```java
+@Test
+@DisplayName("exception이 발생하는지를 테스트")
+@Tag("slow")
+void assertThrowsTest() {
+    IllegalArgumentException exception =
+            assertThrows(IllegalArgumentException.class, () -> new Study(-10));
+
+    assertEquals("limit은 0보다 커야 한다.", exception.getMessage());
+}
+```
+인텔리제이에서는 테스트 설정에서 테스트할 설정을 Tag로 변경하면 된다. (기본값은 Class) <br>
+커맨드라인으로 실행하고 싶다면 메이븐의 경우 pom.xml에 값을 추가해야한다.
+```xml
+<profiles>
+    <profile>
+        <id>default</id>
+        <activation>
+            <activeByDefault>true</activeByDefault>
+        </activation>
+        <build>
+            <plugins>
+                <plugin>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <configuration>
+                        <groups>
+                            fast
+                        </groups>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </build>
+    </profile>
+    <profile>
+        <id>ci</id>
+        <build>
+            <plugins>
+                <plugin>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                </plugin>
+            </plugins>
+        </build>
+    </profile>
+</profiles>
+```
+```text
+./mvnw test
+
+./mvnw test -p ci
+```
+이렇게 xml의 추가를하고 메이븐 테스트를 실행하면 fast의 태그를 가진 메서드만 실행이 된다. <br>
+ci의 경우 특정 값을 적지 않았기 때문에 모든 메서드가 실행된다.
+
+Junit5에서 제공하는 애너테이션은 메타 애너테이션으로 커스텀 애너테이션을 사용하여 커스텀 태그를 만들 수 있다.
+```java
+@Target(ElementType.METHOD)
+@Retention(RetentionPolicy.RUNTIME)
+@Test           
+@Tag("fast")    
+public @interface FastTest {  
+    
+}
+```

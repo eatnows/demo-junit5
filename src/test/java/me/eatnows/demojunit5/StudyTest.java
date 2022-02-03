@@ -15,9 +15,8 @@ import static org.junit.jupiter.api.Assumptions.assumingThat;
 @DisplayNameGeneration(DisplayNameGenerator.ReplaceUnderscores.class)
 class StudyTest {
 
-    @Test
-    @DisplayName("스터디 만들기")
-    @EnabledOnOs(OS.MAC)
+    @FastTest
+    @DisplayName("스터디 만들기 fast")
     void create_new_study() {
         String test_env = System.getenv("TEST_ENV");
         System.out.println("test_env = " + test_env);
@@ -43,9 +42,8 @@ class StudyTest {
 //        );
     }
 
-    @Test
+    @SlowTest
     @DisplayName("exception이 발생하는지를 테스트")
-    @DisabledOnOs(OS.MAC)
     void assertThrowsTest() {
         IllegalArgumentException exception =
                 assertThrows(IllegalArgumentException.class, () -> new Study(-10));
