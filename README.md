@@ -180,3 +180,88 @@ public @interface FastTest {
     
 }
 ```
+
+
+### RepeatedTest
+테스트 환경에서 반복하여 메서드를 실행할 필요가 있을때 사용하면 좋은 애너테이션이다.
+```java
+@DisplayName("스터디 만들기")
+@RepeatedTest(value = 10, name = "{displayName}, {currentRepetition}/{totalRepetitions}") // 테스트에 출력되는 이름을 정해줄 수 있다.
+void repeatTest(RepetitionInfo repetitionInfo) { // RepetitionInfo 인자를 받을 수 잇다.
+    System.out.println("test " + repetitionInfo.getCurrentRepetition() + "/"
+            + repetitionInfo.getTotalRepetitions());
+}
+```
+기본적으로 애너테이션 파라미터로 value값을 넣어줄수있고, 테스트 결과창에 이름을 설정할수도 있다. 
+
+### ParameterizedTest 
+```java
+@DisplayName("스터디 만들기")
+@ParameterizedTest(name = "{index} {displayName} message = {0}") // 각각 파라미터에 대하여 테스트가 실행된다.
+@ValueSource(strings = {"날씨가", "많이", "추워지고", "있습니다."}) // 파라미터에 값을 기입
+void parameterizedTest(String message) {
+    System.out.println("message = " + message);
+}
+```
+`@ParameterizedTest`를 사용하면 각기 다른 파라미터로 테스트 메서드를 실행할 수 있다. <br> 
+파라미터의 값을 주입하는 방법은 여러개가 있지만 해당 코드에서는 `@ValueSource`를 사용하여 값을 주입하여 테스트 메서드가 4번 실행된다.
+
+#### 인자값으로 쓸 수 있는 애너테이션
+- `@ValueSource`
+- `@NullSource`  null인 값을 추가 
+- `@EmptySource` 비어있는 문자열을 하나 추가
+- `@NullAndEmptySource` `@NullSource`와 `@EmptySource`를 각각 추가 
+- `@EnumSource`
+- `@MethodSource`
+- `@CsvSource`
+- `@CsvFileSource`
+- `@ArgumentSource`
+
+
+
+### 테스트 인스턴스
+기본적으로 JUnit이 테스트를 실행할때 메서드를 실행해야하는데,
+테스트 메서드마다 테스트 인스턴스를 새로 만든다. (테스트 메서드를 독립적으로 실행하기 위함)
+
+Junit5에서는 이 기본 전략을 변경할 수 있다. <br> 
+테스트 클래스 위의 애너테이션을 추가한다. `@TestInstance(TestInstance.Lifecycle.PER_CLASS)` 클래스마다 인스턴스를 생성하기 때문에 메서드가 모두 하나의 인스턴스를 공유하게 된다. <br>
+인스턴스를 클래스당 한 번만 만들게 되면 `@BeforeAll`과 `@AfterAll`을 사용할때도 `static` 메서드가 아니여도 사용이 가능하다.
+
+이 전략을 사용하면 테스트의 순서에서 이점을 얻을수도 있다.
+```java
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+class StudyTest {
+    // ...
+}
+```
+
+### 테스트 순서 
+테스트 메서드의 실행순서는 내부적으로 정해져있어서 항상 그 순서대로 실행이 되기는 하지만
+테스트 순서의 의존해서는 안 된다. 제대로된 유닛 테스트라면 다른 테스트와 독립적으로 실행이 되어야한다. (테스트간의 의존성이 없어야 한다.)
+<br> 하지만 때로는 내가 정한 순서로 테스트해야할 때가 있다. (통합테스트, 시나리오 테스트 등)
+어떤 시나리오에서 상태값을 유지하여 테스트 메서드간 의존성이 있어야할 경우 테스트 인스턴스를 매번 만드는것이 아니라 클래스당 인스턴스를 한 번 만들어 상태를 유지하게 만들면 유용하다.
+
+테스트의 순서를 정하고 싶을때는 먼저 테스트 클래스의 `@TestMethodOrder()`를 추가한다. `()`안에는 `MethodOrderer`의 구현체를 넣어줄 수 있다.
+- Alphanumeric
+- OrderAnnotation
+- Random
+
+OrderAnnotation 구현체를 사용하여 설정하면 `@TestMethodOrder(MethodOrderer.OrderAnnotation.class)`<br>
+테스트 메서드위에 Junit 패키지의 `@Order()` 애너테이션을 추가하여 사용할 수 있다. ()안에는 양수를 넣어줄 수 있고, 낮은 숫자일수록 높은 우선순위를 가진다.
+```java
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+class StudyTest {
+
+    @Order(2)
+    @DisplayName("스터디 만들기 fast")
+    void create_new_study() {
+        // ...
+    }
+
+    @Order(1)
+    @DisplayName("exception이 발생하는지를 테스트")
+    void assertThrowsTest() {
+        // ...
+    }
+}
+```

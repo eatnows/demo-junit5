@@ -2,6 +2,16 @@ package me.eatnows.demojunit5;
 
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.condition.*;
+import org.junit.jupiter.api.extension.ParameterContext;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.aggregator.AggregateWith;
+import org.junit.jupiter.params.aggregator.ArgumentsAccessor;
+import org.junit.jupiter.params.aggregator.ArgumentsAggregationException;
+import org.junit.jupiter.params.aggregator.ArgumentsAggregator;
+import org.junit.jupiter.params.converter.ArgumentConversionException;
+import org.junit.jupiter.params.converter.ConvertWith;
+import org.junit.jupiter.params.converter.SimpleArgumentConverter;
+import org.junit.jupiter.params.provider.*;
 
 import java.lang.reflect.Executable;
 import java.time.Duration;
@@ -13,8 +23,11 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static org.junit.jupiter.api.Assumptions.assumingThat;
 
 @DisplayNameGeneration(DisplayNameGenerator.ReplaceUnderscores.class)
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class StudyTest {
 
+    @Order(2)
     @FastTest
     @DisplayName("스터디 만들기 fast")
     void create_new_study() {
@@ -42,6 +55,7 @@ class StudyTest {
 //        );
     }
 
+    @Order(1)
     @SlowTest
     @DisplayName("exception이 발생하는지를 테스트")
     void assertThrowsTest() {
@@ -61,6 +75,58 @@ class StudyTest {
         });
         // TODO ThreadLocal
     }
+
+    @Order(3)
+    @DisplayName("스터디 만들기")
+    @RepeatedTest(value = 10, name = "{displayName}, {currentRepetition}/{totalRepetitions}") // 테스트에 출력되는 이름을 정해줄 수 있다.
+    void repeatTest(RepetitionInfo repetitionInfo) { // RepetitionInfo 인자를 받을 수 잇다.
+        System.out.println("test " + repetitionInfo.getCurrentRepetition() + "/"
+                + repetitionInfo.getTotalRepetitions());
+    }
+
+    @DisplayName("스터디 만들기")
+    @ParameterizedTest(name = "{index} {displayName} message = {0}") // 각각 파라미터에 대하여 테스트가 실행된다.
+//    @ValueSource(strings = {"날씨가", "많이", "추워지고", "있습니다."}) // 파라미터에 값을 기입
+    @ValueSource(ints = {10, 20, 40})
+//    @NullAndEmptySource
+    void parameterizedTest(@ConvertWith(StudyConverter.class) Study study) {
+        System.out.println(study.getLimit());
+    }
+    // 하나의 아규먼트에 대한 것을 변환시켜준다.
+    static class StudyConverter extends SimpleArgumentConverter {
+
+        @Override
+        protected Object convert(Object source, Class<?> targetType) throws ArgumentConversionException {
+            assertEquals(Study.class, targetType, "Can only convert to Study");
+            return new Study(Integer.parseInt(source.toString()));
+        }
+    }
+
+    @DisplayName("스터디 만들기")
+    @ParameterizedTest(name = "{index} {displayName} message = {0}") // 각각 파라미터에 대하여 테스트가 실행된다.
+    @CsvSource({"10, '자바 스터디'", "20, 스프링"})
+    void parameterizedTest2(ArgumentsAccessor argumentsAccessor) {
+        Study study = new Study(argumentsAccessor.getInteger(0), argumentsAccessor.getString(1));
+        System.out.println(study);
+    }
+
+    @DisplayName("스터디 만들기")
+    @ParameterizedTest(name = "{index} {displayName} message = {0}") // 각각 파라미터에 대하여 테스트가 실행된다.
+    @CsvSource({"10, '자바 스터디'", "20, 스프링"})
+    void parameterizedTest3(@AggregateWith(StudyAggregator.class) Study study) {
+        System.out.println(study);
+    }
+
+    // 반드시 static inner class 이거나 public class 이어야 한다.
+    static class StudyAggregator implements ArgumentsAggregator {
+
+        @Override
+        public Object aggregateArguments(ArgumentsAccessor argumentsAccessor, ParameterContext parameterContext) throws ArgumentsAggregationException {
+            return new Study(argumentsAccessor.getInteger(0), argumentsAccessor.getString(1));
+        }
+    }
+
+
 
     @Test
     @DisplayName("스터디 만들기2")
