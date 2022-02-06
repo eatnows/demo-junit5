@@ -265,3 +265,9 @@ class StudyTest {
     }
 }
 ```
+
+
+### Junit 설정파일
+junit5는 테스트 환경에 필요한 설정들을 할 수 있는 설정파일을 만들 수 있다.<br>
+`test` 디렉토리 밑에 `resources` 디텍토리를 생성한 후 그 하위에 `junit-platform.properties`파일을 생성하여 
+테스트에 필요한 설정값들을 적용할 수 있다.
