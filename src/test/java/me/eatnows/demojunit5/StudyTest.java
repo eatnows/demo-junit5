@@ -2,7 +2,9 @@ package me.eatnows.demojunit5;
 
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.condition.*;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.ParameterContext;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.aggregator.AggregateWith;
 import org.junit.jupiter.params.aggregator.ArgumentsAccessor;
@@ -25,7 +27,12 @@ import static org.junit.jupiter.api.Assumptions.assumingThat;
 @DisplayNameGeneration(DisplayNameGenerator.ReplaceUnderscores.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+//@ExtendWith(FindSlowTestExtension.class)
 class StudyTest {
+
+    @RegisterExtension
+    static FindSlowTestExtension findSlowTestExtension =
+            new FindSlowTestExtension(1000L);
 
     @Order(2)
     @FastTest
@@ -33,7 +40,7 @@ class StudyTest {
     void create_new_study() {
         String test_env = System.getenv("TEST_ENV");
         System.out.println("test_env = " + test_env);
-        assumeTrue("LOCAL".equalsIgnoreCase(test_env));
+         assumeTrue("LOCAL".equalsIgnoreCase(test_env));
 
         // 해당 조건을 만족하면 {} 코드를 실행
         assumingThat("local".equalsIgnoreCase(test_env), () -> {
@@ -58,7 +65,8 @@ class StudyTest {
     @Order(1)
     @SlowTest
     @DisplayName("exception이 발생하는지를 테스트")
-    void assertThrowsTest() {
+    void assertThrowsTest() throws InterruptedException {
+        Thread.sleep(1000);
         IllegalArgumentException exception =
                 assertThrows(IllegalArgumentException.class, () -> new Study(-10));
 

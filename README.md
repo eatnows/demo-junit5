@@ -271,3 +271,41 @@ class StudyTest {
 junit5는 테스트 환경에 필요한 설정들을 할 수 있는 설정파일을 만들 수 있다.<br>
 `test` 디렉토리 밑에 `resources` 디텍토리를 생성한 후 그 하위에 `junit-platform.properties`파일을 생성하여 
 테스트에 필요한 설정값들을 적용할 수 있다.
+
+
+### [JUnit 확장 모델](https://junit.org/junit5/docs/current/user-guide/#extensions)
+JUnit 4에서는 확장 모델이 `@RunWith(Runner)`, `TestRule`, `MethodRule`로 나뉘어져 있었는데 <br>
+JUnit 5에서는 `Extension`이라는 모델하나로 통합되었다.
+
+확장모델 클래스를 먼저 만들고 테스트 클래스에 등록을 해줄때 3가지 방법이 있다.
+- 클래스에서 선언하는 방법
+- 코드내부에 등록하는 방법
+- 자동 등록 자바 ServiceLoader를 이용하는 방법
+
+클래스에 애너테이션을 이용하여 등록하는 방법으로는 
+```java
+@ExtendWith(FindSlowTestExtension.class)
+class StudyTest {
+    
+}
+```
+
+이렇게 테스트 클래스위에 해당 확장모델 클래스를 등록하는 방법이 있다.
+이 방법은 확장모델을 디폴트 생성자로 자동으로 생성하기 때문에 확장모델 클래스 생성시 제어가 불가능하다.
+<br> 만약 생성할때 디폴트 생성자를 이용하는것이 아니라면 테스트 클래스 코드 내부에 등록하는 방법을 사용해야한다.
+
+```java
+class StudyTest {
+
+    @RegisterExtension
+    static FindSlowTestExtension findSlowTestExtension =
+            new FindSlowTestExtension(1000L);
+}
+```
+
+이런식으로 테스크 클래스 내부에 직접 확장모델 클래스를 생성하여 사용할 수가 있다.
+
+마지막으로 [ServiceLoader](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/util/ServiceLoader.html) 를 이용하여 자동 등록하는 방법이 있는데, 자동 등록의 디폴트 값이 false이기 때문에 Junit 설정 파일에서 true로 변경해주어야한다.
+`junit.jupiter.extensions.autodetection.enabled = true`
+그리고 확장모델을 어떠한 형식에 맞게 작성해주어야 자동등록이 된다. 하지만 이 방법은 내가 원하지 않는 테스트 코드에도 확장 모델일 적용될 가능성이 있어 추천하지 않는다.
+
