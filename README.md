@@ -309,3 +309,25 @@ class StudyTest {
 `junit.jupiter.extensions.autodetection.enabled = true`
 그리고 확장모델을 어떠한 형식에 맞게 작성해주어야 자동등록이 된다. 하지만 이 방법은 내가 원하지 않는 테스트 코드에도 확장 모델일 적용될 가능성이 있어 추천하지 않는다.
 
+
+
+### JUnit 5 마이그레이션
+JUnit3 혹은 4로 작성된 테스트 코드를 JUnit5에서 실행하거나 마이그레이션 할 수가 있다.
+마이그레이션을 하려면 Junit vintage engine 모듈이 있어야 가능하다.
+```xml
+<dependency>
+    <groupId>org.junit.vintage</groupId>
+    <artifactId>junit-vintage-engine</artifactId>
+    <scope>test</scope>
+</dependency>
+```
+기본적인 테스트 코드는 전부 실행이 된다. 하지만 `@Rule`을 JUnit5에서는 지원하지 않기때문에 junit-jupiter-migrationsupport 모듈이 제공하는 
+`@EnableRuleMigrationSupport`를 이용하면 다음 타입의 Rule을 지원한다.
+- ExternalResource
+- Verifier
+- ExpectedException
+하지만 공식적으로 지원해주는것이 아니기 때문에 100% 지원한다고는 볼 수 없다.
+
+
+
+
