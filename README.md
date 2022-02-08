@@ -331,3 +331,76 @@ JUnit3 혹은 4로 작성된 테스트 코드를 JUnit5에서 실행하거나 �
 
 
 
+# Mockito
+Mock 이란 진짜 객체와 비슷하게 동작하지만 그 동작을 사용자가 직접 컨트롤할 수 있는 객체를 부른다. 
+Mockito 는 이러한 Mock 객체를 생성, 관리, 검증할 수 있는 프레임워크이다. (다른 프레임워크로는 EasyMock, JMock 등이 있다.)
+
+스프링 부트 2.2 버전 이상부터는 spring-boot-starter-test 의존성에 자동으로 Mockito가 추가되어있다.<br>
+만약 Mockito가 추가되어 있지 않다면 의존성을 추가해주어야 한다.
+```xml
+<dependency>
+    <groupId>org.mockito</groupId>
+    <artifactId>mockito-core</artifactId>
+    <version>3.1.0</version>
+    <scope>test</scope>
+</dependency>
+
+<dependency>
+    <groupId>org.mockito</groupId>
+    <artifactId>mockito-junit-jupiter</artifactId>
+    <version>3.1.0</version>
+    <scope>test</scope>
+</dependency>
+```
+mockito-junit-jupiter 는 JUnit 테스트에서 Mockito를 연동해서 사용할 수 있는 MockitoExtension을 제공해주는 라이브러리이다.
+
+### Mockito 객체 만들기
+만약 StudyService라는 클래스를 테스트하고 싶은데 StudentService와 StudyRepository 객체를 의존하고 있다면 
+Mockito를 이용해서 StudentService와 StudyRepository의 Mock객체를 만들어 주입해서 StudyService를 생성할 수 있다.
+```java
+class StudyServiceTest {
+    
+    @Test
+    void studying() {
+        StudentService studentService = Mockito.mock(StudentService.class);
+        StudyRepository studyRepository = Mockito.mock(StudyRepository.class);
+        
+        StudyService studyService = new StudyService(studentService, studyRepository);
+    }
+}
+```
+위 코드와 같이 `Mockito.mock()`을 이용해서 StudentService와 StudyRepository 의 객체를 Mock객체로 생성하여 의존성 주입을 할 수 있다. (Mockito.mock() 메서드는 static import 하여 `Mock()`으로 사용할 수 있다.) 
+<br> 만약 생성한 Mock 객체가 다른 테스트 메서드에서도 쓰인다면 `@Mock` 애너테이션을 이용하여 필드에서 생성할 수도 있다.
+
+```java
+@ExtendWith(MockitoExtension.class)
+class StudyServiceTest {
+    
+    @Mock
+    StudentService studentService;
+    @Mock
+    StudyRepository studyRepository;
+    
+    @Test
+    void studying() {
+        StudyService studyService = new StudyService(studentService, studyRepository);
+    }
+}
+```
+`@Mock` 애너테이션을 이용하여 객체를 Mock 객체로 생성할 수 있지만 그렇다고 바로 주입되는 것은 아니다.<br>
+테스트 클래스위에 `@ExtendWith(MockitoExtension.class)`를 추가해주어야 생성된 Mock객체를 사용하여 의존성 주입을 할 수 있다.
+
+```java
+@ExtendWith(MockitoExtension.class)
+class StudyServiceTest {
+
+    @Test
+    void studying(@Mock StudentService studentService,
+                  @Mock StudyRepository studyRepository) {
+        StudyService studyService = new StudyService(studentService, studyRepository);
+    }
+}
+```
+위 코드처럼 테스트 메서드 파라미터에 선언하게 되면 Mock 객체를 전역이 아닌 메서드 내에서만 생성하여 사용할 수 있다.
+
+
