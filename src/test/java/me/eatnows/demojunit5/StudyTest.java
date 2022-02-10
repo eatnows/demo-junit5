@@ -17,6 +17,9 @@ import org.junit.jupiter.params.converter.SimpleArgumentConverter;
 import org.junit.jupiter.params.provider.*;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.lang.reflect.Executable;
 import java.time.Duration;
@@ -30,12 +33,17 @@ import static org.junit.jupiter.api.Assumptions.assumingThat;
 @DisplayNameGeneration(DisplayNameGenerator.ReplaceUnderscores.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+@Testcontainers
 //@ExtendWith(FindSlowTestExtension.class)
 class StudyTest {
 
     @RegisterExtension
     static FindSlowTestExtension findSlowTestExtension =
             new FindSlowTestExtension(1000L);
+
+    @Container
+    static PostgreSQLContainer postgreSQLContainer = new PostgreSQLContainer()
+            .withDatabaseName("studytest");
 
     @Order(2)
     @FastTest
@@ -145,16 +153,16 @@ class StudyTest {
         System.out.println("StudyTest.create1");
     }
 
-    @BeforeAll // 테스트를 실행하기전에 딱 한번 실행됨, 반드시 static 메서드를 사용해야한다.
-    static void beforeAll() {
-        System.out.println("before all");
-    }
-
-
-    @AfterAll // 모든 테스트가 실행된 이후 딱 한번 실행됨 static 메서드만 가능
-    static void afterAll() {
-        System.out.println("after all");
-    }
+//    @BeforeAll // 테스트를 실행하기전에 딱 한번 실행됨, 반드시 static 메서드를 사용해야한다.
+//    static void beforeAll() {
+//        System.out.println("before all");
+//    }
+//
+//
+//    @AfterAll // 모든 테스트가 실행된 이후 딱 한번 실행됨 static 메서드만 가능
+//    static void afterAll() {
+//        System.out.println("after all");
+//    }
 
     @BeforeEach // 모든 테스트를 실행할 때 각각의 테스트를 실행하기 이전에 실행됨.
     void beforeEach() {

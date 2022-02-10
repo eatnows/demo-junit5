@@ -404,3 +404,80 @@ class StudyServiceTest {
 위 코드처럼 테스트 메서드 파라미터에 선언하게 되면 Mock 객체를 전역이 아닌 메서드 내에서만 생성하여 사용할 수 있다.
 
 
+# [TestContainers](https://www.testcontainers.org/)
+테스트 환경에서 도커 컨테이너를 활용하여 테스트를 실행할 수 있게 도와주는 라이브러리이다.
+<br> 테스트에서는 In-memory db를 많이 사용하는데 TestContainers를 이용하면 실제 운영되는 환경과 가까운 테스트를 만들 수 있다.
+
+
+TestContainers를 사용하려면 의존성을 추가해야한다.
+```xml
+<dependency>
+    <groupId>org.testcontainers</groupId>
+    <artifactId>junit-jupiter</artifactId>
+    <version>1.16.3</version>
+    <scope>test</scope>
+</dependency>
+```
+해당 의존성을 추가하면 `@TestContainers`를 사용할 수 있다. `@TestContainers`는 JUnit 5 Extension으로 
+테스트 클래스에 `@Container`를 사용한 필드를 찾아서 컨테이너 라이프사이클 관련 메서드를 실행해준다.
+
+`@Container`는 인스턴스 필드에 사용하면 모든 테스트 마다 컨테이너를 재시작하고, <br>
+static 필드에 사용하면 클래스 내부 모든 테스트에서 동일한 컨테이너를 재사용한다.
+
+TestContainers는 여러 모듈을 지원하는데 필요한 모듈에 맞는 의존성을 추가해야주어야 한다.
+
+```xml
+<dependency>
+    <groupId>org.testcontainers</groupId>
+    <artifactId>postgresql</artifactId>
+    <version>1.16.3</version>
+    <scope>test</scope>
+</dependency>
+```
+위와같이 필요한 모듈의 의존성을 추가해주어야 해당 모듈의 컨테이너 코드를 사용할 수 있다.
+
+```java
+class Study {
+    // static이 아닐경우 테스트 메서드마다 컨테이너를 재시작한다.
+    private static PostgreSQLContainer postgreSQLContainer = new PostgreSQLContainer();
+
+    @BeforeAll
+    static void beforeAll() {
+        postgreSQLContainer.start();
+    }
+
+    @AfterAll
+    static void afterAll() {
+        postgreSQLContainer.close();
+    }
+}
+```
+기본적으로 해당 모듈의 컨테이너 클래스를 생성하여 사용할 수 있고 `start()` 메서드로 컨테이너를 시작, `close()`로 컨테이너를 종료해주어야한다.
+<br> `application.properties`에 database url을 설정했어도 이렇게 사용하면 TestContainers에서는 해당값을 참조하지 못해 랜덤한 값으로 생성하게 된다.<br>
+database url에 tc라는 키워드로 TestContainers가 참조할 수 있게 해야한다.
+```properties
+#1
+spring.datasource.url=jdbc:tc:postgresql//localhost:15432/studytest
+
+#2
+spring.datasource.url=jdbc:tc:postgresql///studytest
+```
+이런식으로 tc키워드를 jdbc와 db사이에 입력을 하면 된다. tc를 사용할 경우 host와 port는 중요하지 않기 때문에 생략해도 된다.
+```properties
+spring.datasource.driver-class-name=org.testcontainers.jdbc.ContainerDatabaseDriver
+```
+반드시 driver-class-name을 추가해주어야하는데 tc 키워드가 붙어잇는 url 정보에 해당하는 driver로 testContainers가 제공하는 driver를 사용하게 된다.
+
+```java
+@Testcontainers
+class Study {
+    
+    @Container
+    static PostgreSQLContainer postgreSQLContainer = new PostgreSQLContainer()
+            .withDatabaseName("studytest"); // databaseName을 설정할 수도 있다.
+}
+```
+직접 container의 라이프사이클을 관리하였지만 junit-jupiter TestContainers 라이브러리에 애너테이션을 사용하면 자동으로 라이프 사이클을 관리해준다.
+
+
+
