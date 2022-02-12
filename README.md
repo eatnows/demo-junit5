@@ -481,3 +481,50 @@ class Study {
 
 
 
+### 컨테이너 정보를 스프링에서 참조하기
+1. TestContainers를 이용하여 컨테이너 생성
+2. ApplicationContextInitializer를 구현하여, 생성된 컨테이너에서 정보를 추출, Environment에 넣어준다.
+3. @ContextConfiguration을 사용해서 ApplicationContextInlitializer 구현체를 등록한다.
+4. 테스트 코드에서 Environment, @Value, @ConfigurationProperties 등 방법으로 해당 프로퍼티를 사용한다.
+
+
+`@ContextConfiguration` 은 스프링이 제공하는 애너테이션으로 스프링 테스트 컨텍스트가 사용할 설정 파일 또는 컨텍스트를 커스터마이징 할 수 있는 방법을 제공해준다.
+<br>`ApplicationContextInlitializer`는 스프링 ApplicationContext를 프로그래밍으로 초기화할 때 사용할 수 있는 콜백 인터페이스로,
+특정 프로파일을 활성화하거나 프로퍼티 소스를 추가하는 작업을 할 수 있다.
+<br> `TestPropertyValues`는 테스트용 프로퍼티 소스를 정의할 때 사용한다.
+`Environment`는 스프링 핵심 API로 프로퍼티와 프로파일을 담당한다.
+
+```java
+@Testcontainers
+@ContextConfiguration(initializers = StudyTest.ContainerPropertyInitializer.class)
+class StudyTest {
+
+    @Container
+    static GenericContainer postgreSQLContainer = new GenericContainer()
+            .withExposedPorts(5432)
+            .withEnv("POSTGRES_DB", "studytest");
+    
+    // 1. Environment 를 이용하여 값을 사용하는 방법
+    @Autowired
+    Environment environment;
+    
+    // 2. @Value 를 이용하여 값을 사용하는 방법
+    @Value("${container.port}")
+    int port;
+    
+    // ApplicationContextInitializer를 구현하여 컨테이너의 정보를 Environment에 넣어준다. 
+    static class ContainerPropertyInitializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {
+
+        @Override
+        public void initialize(ConfigurableApplicationContext applicationContext) {
+            // =을 기준으로 key value를 적어준다.
+            TestPropertyValues.of("container.port=" + postgreSQLContainer.getMappedPort(5432))
+                    .applyTo(applicationContext.getEnvironment());
+
+        }
+    }
+}
+
+```
+
+

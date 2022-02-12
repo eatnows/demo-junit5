@@ -17,6 +17,14 @@ import org.junit.jupiter.params.converter.SimpleArgumentConverter;
 import org.junit.jupiter.params.provider.*;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.test.util.TestPropertyValues;
+import org.springframework.context.ApplicationContextInitializer;
+import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.core.env.Environment;
+import org.springframework.test.context.ContextConfiguration;
+import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -34,6 +42,7 @@ import static org.junit.jupiter.api.Assumptions.assumingThat;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @Testcontainers
+@ContextConfiguration(initializers = StudyTest.ContainerPropertyInitializer.class)
 //@ExtendWith(FindSlowTestExtension.class)
 class StudyTest {
 
@@ -42,8 +51,15 @@ class StudyTest {
             new FindSlowTestExtension(1000L);
 
     @Container
-    static PostgreSQLContainer postgreSQLContainer = new PostgreSQLContainer()
-            .withDatabaseName("studytest");
+    static GenericContainer postgreSQLContainer = new GenericContainer()
+            .withExposedPorts(5432)
+            .withEnv("POSTGRES_DB", "studytest");
+
+    @Autowired
+    Environment environment;
+
+    @Value("${container.port}")
+    int port;
 
     @Order(2)
     @FastTest
@@ -82,6 +98,8 @@ class StudyTest {
                 assertThrows(IllegalArgumentException.class, () -> new Study(-10));
 
         assertEquals("limit은 0보다 커야 한다.", exception.getMessage());
+
+        System.out.println(environment.getProperty("container.port"));
     }
     
     @Test
@@ -173,4 +191,16 @@ class StudyTest {
     void afterEach() {
         System.out.println("After each");
     }
+
+    static class ContainerPropertyInitializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {
+
+        @Override
+        public void initialize(ConfigurableApplicationContext applicationContext) {
+            // =을 기준으로 key value를 적어준다.
+            TestPropertyValues.of("container.port=" + postgreSQLContainer.getMappedPort(5432))
+                    .applyTo(applicationContext.getEnvironment());
+
+        }
+    }
+
 }
