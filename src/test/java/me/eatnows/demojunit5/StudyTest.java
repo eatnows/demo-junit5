@@ -24,11 +24,13 @@ import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.core.env.Environment;
 import org.springframework.test.context.ContextConfiguration;
+import org.testcontainers.containers.DockerComposeContainer;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.io.File;
 import java.lang.reflect.Executable;
 import java.time.Duration;
 import java.util.function.Supplier;
@@ -51,9 +53,8 @@ class StudyTest {
             new FindSlowTestExtension(1000L);
 
     @Container
-    static GenericContainer postgreSQLContainer = new GenericContainer()
-            .withExposedPorts(5432)
-            .withEnv("POSTGRES_DB", "studytest");
+    static DockerComposeContainer postgreSQLContainer
+            = new DockerComposeContainer(new File("src/test/resources/docker-compose.yml"));
 
     @Autowired
     Environment environment;
@@ -197,7 +198,7 @@ class StudyTest {
         @Override
         public void initialize(ConfigurableApplicationContext applicationContext) {
             // =을 기준으로 key value를 적어준다.
-            TestPropertyValues.of("container.port=" + postgreSQLContainer.getMappedPort(5432))
+            TestPropertyValues.of("container.port=" + postgreSQLContainer.getServicePort("study_db", 5432))
                     .applyTo(applicationContext.getEnvironment());
 
         }

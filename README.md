@@ -527,4 +527,29 @@ class StudyTest {
 
 ```
 
+### docker-compose 이용하기
+docker-compose를 이용해서 test에 이용할 container를 실행시킬 수 있는데, 먼저 docker-compose.yml 파일을 작성해야한다.
+```yaml
+version: "3"
+
+services:
+  study-db:
+    image: postgres
+    ports:
+      - 5432
+    environment:
+      POSTGRES_PASSWORD: study
+      POSTGRES_USER: study
+      POSTGRES_DB: study
+```
+yaml 파일을 제대로 작성해서 TestContainers의 버전에 따라 오류로 인식을 못하는 경우가 있다.
+```java
+@TestContainsers
+class StudyTest {
+    @Container
+    static DockerComposeContainer postgreSQLContainer
+            = new DockerComposeContainer(new File("src/test/resources/docker-compose.yml"));
+}
+```
+`CodkerComposeContainer` 클래스를 이용해서 해당 컨테이너를 생성할 수 있는데 생성자에 docker-compose.yml 파일을 등록해주어야 한다.
 
